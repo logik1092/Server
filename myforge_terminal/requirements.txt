@@ -1,0 +1,2 @@
+# myforge_terminal/requirements.txt
+# Dependencies 

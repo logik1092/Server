@@ -1,0 +1,46 @@
+{
+  "username": "forgeadmin",
+  "hostname": "209.145.57.9",
+  "port": 22,
+  "password": "F3Zillow123",
+  "key_path": "",
+  "commands": {
+    "launch_llama": "cd /var/www/myforge.ai/llama.cpp/build/bin && ./llama-server -m ../../models/openchat-3.5-0106.Q4_K_M.gguf --port 8001 --threads 6",
+    "activate_venv": "source /var/www/myforge.ai/venv/bin/activate",
+    "start_uvicorn": "uvicorn server:app --host 0.0.0.0 --port=8080 --reload",
+    "kill_uvicorn": "pkill -f uvicorn",
+    "reload_nginx": "sudo systemctl reload nginx",
+    "restart_nginx": "systemctl restart nginx",
+    "nginx_status": "systemctl status nginx",
+    "test_nginx": "nginx -t",
+    "cd_website": "cd /var/www/myforge.ai",
+    "cd_nginx": "cd /etc/nginx/sites-available",
+    "cd_home": "cd ~",
+    "list_files": "ls -l",
+    "python_processes": "ps aux | grep python",
+    "check_memory": "free -h",
+    "check_disk": "df -h",
+    "check_cpu": "top -bn1 | head -n 5",
+    "health_check": "curl http://localhost:42181/health"
+  },
+  "servers": {
+    "MyForge": {
+      "username": "forgeadmin",
+      "hostname": "209.145.57.9",
+      "port": 22
+    },
+    "Vultr": {
+      "username": "root",
+      "hostname": "149.28.126.226",
+      "port": 22
+    }
+  },
+  "theme": "dark",
+  "font_size": 10,
+  "log_commands": true,
+  "auto_connect": false,
+  "last_connection": {
+    "hostname": "209.145.57.9",
+    "username": "forgeadmin"
+  }
+}
