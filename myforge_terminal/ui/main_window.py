@@ -39,6 +39,7 @@ class MainWindow:
         # Set up theme manager
         self.theme_manager = ThemeManager(self.root, config)
         self.theme_manager.apply_theme(config.get("theme", "dark"))
+        self._apply_custom_styles() # Apply custom styles after base theme
         
         # Create main frame
         self.main_frame = tk.Frame(root, bg=self.theme_manager.bg_color)
@@ -63,7 +64,7 @@ class MainWindow:
         # Server selection dropdown
         tk.Label(self.server_frame, text="Server:", 
                  bg=self.theme_manager.bg_color, 
-                 fg=self.theme_manager.fg_color).pack(side=tk.LEFT, padx=5)
+                 fg=self.theme_manager.fg_color).pack(side=tk.LEFT, padx=(0, 5)) # Adjusted padx
         
         # Get server options
         servers = self.config.get("servers", {})
@@ -73,26 +74,29 @@ class MainWindow:
         self.server_var = tk.StringVar()
         self.server_dropdown = ttk.Combobox(self.server_frame, 
                                            textvariable=self.server_var, 
-                                           values=server_options)
-        self.server_dropdown.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+                                           values=server_options,
+                                           style="TCombobox") # Apply style
+        self.server_dropdown.pack(side=tk.LEFT, padx=(0, 10), fill=tk.X, expand=True) # Adjusted padx
         
         if server_options:
             self.server_dropdown.current(0)
         
         # Connect button
         self.connect_btn = ttk.Button(self.server_frame, text="Connect", 
-                                     command=self._connect_selected)
-        self.connect_btn.pack(side=tk.LEFT, padx=5)
+                                     command=self._connect_selected,
+                                     style="TButton") # Apply style
+        self.connect_btn.pack(side=tk.LEFT, padx=(0, 5)) # Adjusted padx
         
         # Disconnect button
         self.disconnect_btn = ttk.Button(self.server_frame, text="Disconnect", 
                                         command=self._disconnect,
-                                        state=tk.DISABLED)
-        self.disconnect_btn.pack(side=tk.LEFT, padx=5)
+                                        state=tk.DISABLED,
+                                        style="TButton") # Apply style
+        self.disconnect_btn.pack(side=tk.LEFT, padx=(0, 0)) # Adjusted padx
         
         # Create notebook for tabs
-        self.notebook = ttk.Notebook(self.main_frame)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        self.notebook = ttk.Notebook(self.main_frame, style="TNotebook") # Apply style
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=(5,10)) # Adjusted pady
         
         # Create tabs
         self.terminal_tab = TerminalTab(self.notebook, self.ssh_client, 
@@ -112,8 +116,10 @@ class MainWindow:
         self.notebook.add(self.logs_tab.frame, text="Logs")
         
         # System monitor frame
-        self.monitor_frame = tk.Frame(self.main_frame, bg="#2d2d2d", height=25)
-        self.monitor_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
+        # Use ThemeManager color for monitor_frame background
+        self.monitor_frame = tk.Frame(self.main_frame, bg=self.theme_manager.bg_color, height=28) 
+        self.monitor_frame.pack(fill=tk.X, padx=10, pady=(0, 0)) # Adjusted pady
+        self.monitor_frame.pack_propagate(False) # Prevent resizing
         
         # Status variables
         self.server_name_var = tk.StringVar(value="SERVER: Not connected")
@@ -122,25 +128,197 @@ class MainWindow:
         self.disk_var = tk.StringVar(value="DISK: --")
         
         # Status labels
+        tm = self.theme_manager # Shorthand for ThemeManager
+        monitor_font = ('Segoe UI', 8) # Smaller font for monitor bar
+
         tk.Label(self.monitor_frame, textvariable=self.server_name_var, 
-                bg="#2d2d2d", fg="#77ccff", padx=10).pack(side=tk.LEFT)
+                bg=tm.bg_color, fg=tm.accent_color_1, padx=10, font=monitor_font).pack(side=tk.LEFT, pady=2)
         tk.Label(self.monitor_frame, textvariable=self.cpu_var, 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color, padx=10).pack(side=tk.LEFT)
+                bg=tm.bg_color, fg=tm.fg_color, padx=10, font=monitor_font).pack(side=tk.LEFT, pady=2)
         tk.Label(self.monitor_frame, textvariable=self.mem_var, 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color, padx=10).pack(side=tk.LEFT)
+                bg=tm.bg_color, fg=tm.fg_color, padx=10, font=monitor_font).pack(side=tk.LEFT, pady=2)
         tk.Label(self.monitor_frame, textvariable=self.disk_var, 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color, padx=10).pack(side=tk.LEFT)
+                bg=tm.bg_color, fg=tm.fg_color, padx=10, font=monitor_font).pack(side=tk.LEFT, pady=2)
         
         # Status bar
         self.status_var = tk.StringVar()
         self.status_var.set("Not connected")
         self.status_bar = tk.Label(self.main_frame, textvariable=self.status_var, 
-                                  bd=1, relief=tk.SUNKEN, anchor=tk.W,
-                                  bg="#2d2d2d", fg=self.theme_manager.fg_color)
-        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 5))
+                                  bd=0, relief=tk.FLAT, anchor=tk.W, # Modernized relief
+                                  bg=tm.accent_color_1, fg=tm.button_fg_color, # Styled like a banner
+                                  padx=10, pady=4) # Added padding
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, padx=0, pady=0) # Fill full width, no external X padding
         
         # Set up callbacks
         self._setup_callbacks()
+
+    def _apply_custom_styles(self):
+        """Apply custom ttk styles for a modern look, integrated with ThemeManager."""
+        style = ttk.Style()
+        tm = self.theme_manager # Shorthand
+
+        # Assumed ThemeManager properties (based on common patterns)
+        # These should exist in your ThemeManager class
+        tm.button_fg_color = getattr(tm, 'button_fg_color', tm.fg_color) 
+        tm.accent_color_2 = getattr(tm, 'accent_color_2', tm.accent_color_1)
+        tm.input_bg_color = getattr(tm, 'input_bg_color', tm.bg_color)
+        tm.input_fg_color = getattr(tm, 'input_fg_color', tm.fg_color)
+        tm.disabled_bg_color = getattr(tm, 'disabled_bg_color', tm.bg_color)
+        tm.disabled_fg_color = getattr(tm, 'disabled_fg_color', tm.fg_color)
+
+
+        default_font = ('Segoe UI', 9) 
+
+        # Button Style
+        style.configure("TButton", 
+                        background=tm.accent_color_1, 
+                        foreground=tm.button_fg_color,
+                        padding=(8, 4, 8, 4), 
+                        borderwidth=0, # Flat
+                        relief=tk.FLAT,
+                        font=default_font)
+        style.map("TButton",
+                  background=[('active', tm.accent_color_2), ('disabled', tm.disabled_bg_color)],
+                  foreground=[('disabled', tm.disabled_fg_color)])
+
+        # Combobox Style
+        style.configure("TCombobox", 
+                        fieldbackground=tm.input_bg_color, # Background of the entry field
+                        foreground=tm.input_fg_color,
+                        selectbackground=tm.accent_color_1, # Background of selected item in dropdown list
+                        selectforeground=tm.button_fg_color, # Foreground of selected item in dropdown list
+                        background=tm.input_bg_color, # Background of the arrow button
+                        borderwidth=1, # Thin border for the field
+                        relief=tk.SOLID, # Or tk.FLAT
+                        padding=(6, 4, 6, 4),
+                        font=default_font)
+        style.map("TCombobox",
+                  foreground=[('readonly', tm.input_fg_color), ('disabled', tm.disabled_fg_color)],
+                  fieldbackground=[('readonly', tm.input_bg_color), ('disabled', tm.disabled_bg_color)],
+                  background=[('readonly', tm.input_bg_color), ('disabled', tm.disabled_bg_color)])
+        
+        # Style for the Combobox dropdown list (via option_add)
+        self.root.option_add('*TCombobox*Listbox.background', tm.input_bg_color)
+        self.root.option_add('*TCombobox*Listbox.foreground', tm.input_fg_color)
+        self.root.option_add('*TCombobox*Listbox.selectBackground', tm.accent_color_1)
+        self.root.option_add('*TCombobox*Listbox.selectForeground', tm.button_fg_color)
+        self.root.option_add('*TCombobox*Listbox.font', default_font)
+        self.root.option_add('*TCombobox*Listbox.bd', 0) # No border for listbox
+        self.root.option_add('*TCombobox*Listbox.relief', tk.FLAT)
+
+
+        # Treeview Style (used in FileExplorerTab, define here for consistency)
+        style.configure("Treeview", 
+                        background=tm.input_bg_color, 
+                        foreground=tm.fg_color,
+                        fieldbackground=tm.input_bg_color, 
+                        rowheight=28, # Increased row height
+                        font=default_font,
+                        borderwidth=0, # No border for treeview itself
+                        relief=tk.FLAT)
+        style.map("Treeview",
+                  background=[('selected', tm.accent_color_1)],
+                  foreground=[('selected', tm.button_fg_color)])
+        
+        style.configure("Treeview.Heading", 
+                        background=tm.accent_color_1, 
+                        foreground=tm.button_fg_color,
+                        padding=(8, 8, 8, 8), # Increased padding for headings
+                        borderwidth=0, # No border for headings
+                        relief=tk.FLAT,
+                        font=(default_font[0], default_font[1], 'bold'))
+        style.map("Treeview.Heading",
+                  background=[('active', tm.accent_color_2)])
+
+        # Scrollbar Style (used in FileExplorerTab and TerminalTab)
+        style.configure("TScrollbar", 
+                        background=tm.bg_color, # Background of the scrollbar itself (not the arrows/slider)
+                        troughcolor=tm.input_bg_color, 
+                        bordercolor=tm.bg_color, 
+                        arrowcolor=tm.fg_color, 
+                        relief=tk.FLAT,
+                        arrowsize=14) # Slightly larger arrows
+        style.map("TScrollbar",
+                  background=[('active', tm.accent_color_1)], # Slider color when active
+                  arrowcolor=[('pressed', tm.accent_color_2), ('active', tm.button_fg_color)])
+        
+        # Notebook Style
+        style.configure("TNotebook", 
+                        background=tm.bg_color, 
+                        borderwidth=0, # No border around the notebook
+                        tabmargins=(0, 5, 0, 0)) # Margins around the tab area (l,t,r,b)
+        style.configure("TNotebook.Tab", 
+                        background=tm.input_bg_color, 
+                        foreground=tm.fg_color,
+                        padding=(12, 6, 12, 6), # Generous padding for tabs
+                        borderwidth=0, # No border for individual tabs
+                        font=(default_font[0], default_font[1], 'normal'))
+        style.map("TNotebook.Tab",
+                  background=[('selected', tm.accent_color_1), ('active', tm.accent_color_2)],
+                  foreground=[('selected', tm.button_fg_color), ('active', tm.button_fg_color)],
+                  font=[('selected', (default_font[0], default_font[1], 'bold'))])
+
+        # General LabelFrame style (used in FileExplorerTab details)
+        style.configure("TLabelFrame", 
+                        background=tm.bg_color, 
+                        foreground=tm.fg_color, 
+                        borderwidth=1, 
+                        relief=tk.SOLID, 
+                        padding=(10, 10, 10, 10), # Padding inside the frame
+                        font=default_font)
+        style.configure("TLabelFrame.Label", 
+                        background=tm.bg_color, 
+                        foreground=tm.fg_color,
+                        padding=(0,0,5,2), # Padding around the label widget itself (l,t,r,b)
+                        font=(default_font[0], default_font[1], 'bold'))
+        
+        # General ttk.Label style (if used instead of tk.Label)
+        style.configure("TLabel", 
+                        background=tm.bg_color, 
+                        foreground=tm.fg_color,
+                        font=default_font)
+
+        # TEntry Style (for ttk.Entry, if used)
+        style.configure("TEntry",
+                        fieldbackground=tm.input_bg_color,
+                        foreground=tm.input_fg_color,
+                        insertcolor=tm.fg_color, # Cursor color
+                        borderwidth=1,
+                        relief=tk.SOLID, # Or tk.FLAT
+                        padding=(6,4,6,4),
+                        font=default_font)
+        style.map("TEntry",
+                  bordercolor=[('focus', tm.accent_color_1)],
+                  borderwidth=[('focus', 1)])
+
+
+        # Checkbutton Style
+        style.configure("TCheckbutton", 
+                        background=tm.bg_color, 
+                        foreground=tm.fg_color,
+                        indicatorbackground=tm.input_bg_color,
+                        indicatorforeground=tm.accent_color_1, # Color of the check mark
+                        indicatordiameter=14, # Size of the check indicator
+                        padding=(5, 5, 5, 5),
+                        font=default_font)
+        style.map("TCheckbutton",
+                  indicatorbackground=[('selected', tm.input_bg_color), ('active', tm.input_bg_color)],
+                  indicatorforeground=[('selected', tm.accent_color_1)], # Checkmark color when selected
+                  background=[('active', tm.bg_color)]) # BG of label part when hovered
+
+        # Radiobutton Style
+        style.configure("TRadiobutton",
+                        background=tm.bg_color,
+                        foreground=tm.fg_color,
+                        indicatorbackground=tm.input_bg_color,
+                        indicatorforeground=tm.accent_color_1, # Color of the radio indicator when selected
+                        indicatordiameter=14,
+                        padding=(5, 2, 5, 2), # Adjusted padding
+                        font=default_font)
+        style.map("TRadiobutton",
+                  indicatorbackground=[('selected', tm.input_bg_color), ('active', tm.input_bg_color)],
+                  indicatorforeground=[('selected', tm.accent_color_1)],
+                  background=[('active', tm.bg_color)])
     
     def _setup_bindings(self):
         """Set up event bindings"""

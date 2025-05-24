@@ -452,27 +452,27 @@ class SFTPOperations:
                 return
             
             try:
-                remote_path = item['path']
+                normalized_remote_path = item['path'].replace('\\', '/')
                 item_type = item['type']
                 
                 if item_type == 'directory':
                     # Recursively delete directory contents
-                    self._delete_directory_recursive(sftp, remote_path)
+                    self._delete_directory_recursive(sftp, normalized_remote_path)
                 else:
                     # Delete file
-                    sftp.remove(remote_path)
+                    sftp.remove(normalized_remote_path)
                 
-                self.logger.log(f"Deleted {item_type} {remote_path}")
+                self.logger.log(f"Deleted {item_type} {normalized_remote_path}")
                 
                 if on_complete:
                     on_complete(True, None)
                 
                 # Refresh parent directory listing
-                parent_dir = posixpath.dirname(remote_path)
+                parent_dir = posixpath.dirname(normalized_remote_path)
                 self.list_directory(parent_dir)
             
             except Exception as e:
-                error_msg = f"Error deleting {item['path']}: {str(e)}"
+                error_msg = f"Error deleting {item['path'].replace('\\', '/')}: {str(e)}"
                 self.logger.log(error_msg)
                 
                 if on_complete:
@@ -498,13 +498,14 @@ class SFTPOperations:
                 return
             
             try:
-                old_path = item['path']
-                parent_dir = posixpath.dirname(old_path)
-                new_path = posixpath.join(parent_dir, new_name)
+                parent_dir = posixpath.dirname(item['path'].replace('\\', '/'))
+                normalized_old_path = item['path'].replace('\\', '/')
+                normalized_new_path = posixpath.join(parent_dir, new_name)
+                normalized_new_path = normalized_new_path.replace('\\', '/')
                 
                 # Check if target already exists
                 try:
-                    sftp.stat(new_path)
+                    sftp.stat(normalized_new_path)
                     if on_complete:
                         on_complete(False, f"A file or directory named {new_name} already exists")
                     return
@@ -512,8 +513,8 @@ class SFTPOperations:
                     pass
                 
                 # Rename
-                sftp.rename(old_path, new_path)
-                self.logger.log(f"Renamed {old_path} to {new_path}")
+                sftp.rename(normalized_old_path, normalized_new_path)
+                self.logger.log(f"Renamed {normalized_old_path} to {normalized_new_path}")
                 
                 if on_complete:
                     on_complete(True, None)
@@ -522,7 +523,7 @@ class SFTPOperations:
                 self.list_directory(parent_dir)
             
             except Exception as e:
-                error_msg = f"Error renaming {item['path']}: {str(e)}"
+                error_msg = f"Error renaming {item['path'].replace('\\', '/')}: {str(e)}"
                 self.logger.log(error_msg)
                 
                 if on_complete:
