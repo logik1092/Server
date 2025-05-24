@@ -36,12 +36,16 @@ class FileExplorerTab:
         
         # File selection state
         self.selected_items = []
+        self.unfiltered_items = [] # For client-side filtering
         
         # Setup UI
         self._setup_ui()
     
     def _setup_ui(self):
         """Set up file explorer UI"""
+        # Filter bar
+        self._setup_filter_bar()
+
         # Path navigation frame
         self._setup_path_navigation()
         
@@ -54,40 +58,44 @@ class FileExplorerTab:
     def _setup_path_navigation(self):
         """Set up path navigation components"""
         nav_frame = tk.Frame(self.frame, bg=self.theme_manager.bg_color)
-        nav_frame.pack(fill=tk.X, padx=10, pady=5)
+        nav_frame.pack(fill=tk.X, padx=10, pady=(5, 8)) # Adjusted pady
         
         # Current path label
         tk.Label(nav_frame, text="Path:", bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).pack(side=tk.LEFT, padx=5)
+                fg=self.theme_manager.fg_color).pack(side=tk.LEFT, padx=(0,5))
         
         # Path entry with editable text
         self.path_var = tk.StringVar(value=self.current_path)
         self.path_entry = tk.Entry(
             nav_frame, textvariable=self.path_var, 
-            bg="#2d2d2d", fg=self.theme_manager.fg_color
+            bg=self.theme_manager.input_bg_color, # Use ThemeManager color
+            fg=self.theme_manager.input_fg_color, # Use ThemeManager color
+            relief=tk.FLAT, 
+            bd=2, # Slightly more visible border for entry
+            insertbackground=self.theme_manager.fg_color # Cursor color
         )
-        self.path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        self.path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,10), ipady=2) # Added ipady
         self.path_entry.bind("<Return>", self._on_path_changed)
         
-        # Navigate button
-        ttk.Button(nav_frame, text="Go", command=self._on_path_changed).pack(side=tk.LEFT, padx=5)
+        # Navigate button (ttk.Button will inherit "TButton" style)
+        ttk.Button(nav_frame, text="Go", command=self._on_path_changed).pack(side=tk.LEFT, padx=(0,5))
         
         # Home button
         ttk.Button(nav_frame, text="Home", 
-                  command=lambda: self._navigate_to_path("/home")).pack(side=tk.LEFT, padx=5)
+                  command=lambda: self._navigate_to_path("/home")).pack(side=tk.LEFT, padx=(0,5))
         
         # Website button
         ttk.Button(nav_frame, text="Website", 
-                  command=lambda: self._navigate_to_path("/var/www/myforge.ai")).pack(side=tk.LEFT, padx=5)
+                  command=lambda: self._navigate_to_path("/var/www/myforge.ai")).pack(side=tk.LEFT, padx=(0,5))
         
         # Refresh button
         ttk.Button(nav_frame, text="↻", width=3, 
-                  command=self.refresh_view).pack(side=tk.RIGHT, padx=5)
+                  command=self.refresh_view).pack(side=tk.RIGHT, padx=(0,0))
     
     def _setup_explorer_frame(self):
         """Set up the main file explorer frame"""
         explorer_frame = tk.Frame(self.frame, bg=self.theme_manager.bg_color)
-        explorer_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        explorer_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 5)) # Adjusted pady
         
         # Create treeview for file listing
         self._setup_file_treeview(explorer_frame)
@@ -99,16 +107,18 @@ class FileExplorerTab:
         """Set up file listing treeview"""
         # Left side for file tree
         tree_frame = tk.Frame(parent_frame, bg=self.theme_manager.bg_color)
-        tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Add padding to the right of tree_frame to separate it from details_frame
+        tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0,5)) 
         
-        # Create treeview with scrollbars
+        # Create treeview with scrollbars (ttk.Treeview will inherit "Treeview" style)
         columns = ("name", "size", "type", "modified", "permissions")
         self.file_tree = ttk.Treeview(
             tree_frame, columns=columns, show="headings", 
-            selectmode="extended"
+            selectmode="extended" 
+            # Style is inherited from MainWindow's _apply_custom_styles
         )
         
-        # Define column headings
+        # Define column headings (styling is via "Treeview.Heading" style)
         self.file_tree.heading("name", text="Name")
         self.file_tree.heading("size", text="Size")
         self.file_tree.heading("type", text="Type")
@@ -116,13 +126,13 @@ class FileExplorerTab:
         self.file_tree.heading("permissions", text="Permissions")
         
         # Configure column widths
-        self.file_tree.column("name", width=200, stretch=True)
-        self.file_tree.column("size", width=80, anchor=tk.E, stretch=False)
-        self.file_tree.column("type", width=80, stretch=False)
-        self.file_tree.column("modified", width=140, stretch=False)
-        self.file_tree.column("permissions", width=100, stretch=False)
+        self.file_tree.column("name", width=250, stretch=True) # Increased width for name
+        self.file_tree.column("size", width=100, anchor=tk.E, stretch=False) # Increased width for size
+        self.file_tree.column("type", width=100, stretch=False) # Increased width for type
+        self.file_tree.column("modified", width=160, stretch=False) # Increased width for modified
+        self.file_tree.column("permissions", width=120, stretch=False) # Increased width for permissions
         
-        # Add scrollbars
+        # Add scrollbars (ttk.Scrollbar will inherit "TScrollbar" style)
         vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.file_tree.yview)
         hsb = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.file_tree.xview)
         self.file_tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
@@ -142,11 +152,12 @@ class FileExplorerTab:
     
     def _setup_details_panel(self, parent_frame):
         """Set up file details panel"""
-        # Right side for details
-        details_frame = tk.LabelFrame(
+        tm = self.theme_manager # Shorthand
+        # Right side for details (Use ttk.LabelFrame to apply "TLabelFrame" style)
+        details_frame = ttk.LabelFrame(
             parent_frame, text="Details", 
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            width=250
+            # style="TLabelFrame" is inherited if not overridden
+            width=280 # Slightly wider details panel
         )
         details_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
         details_frame.pack_propagate(False)  # Prevent shrinking
@@ -170,70 +181,82 @@ class FileExplorerTab:
         ]
         
         for i, (label_text, var) in enumerate(detail_labels):
-            label_frame = tk.Frame(details_frame, bg=self.theme_manager.bg_color)
-            label_frame.pack(fill=tk.X, padx=5, pady=2, anchor=tk.W)
+            label_frame = tk.Frame(details_frame, bg=tm.bg_color) # Use tm.bg_color for LabelFrame's internal bg
+            label_frame.pack(fill=tk.X, padx=10, pady=3, anchor=tk.W) # Increased padx/pady
             
             tk.Label(
-                label_frame, text=label_text, width=10, anchor=tk.W,
-                bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color
+                label_frame, text=label_text, width=12, anchor=tk.W, # Increased width for alignment
+                bg=tm.bg_color, fg=tm.fg_color 
             ).pack(side=tk.LEFT)
             
             detail_label = tk.Label(
-                label_frame, textvariable=var, anchor=tk.W,
-                bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color
+                label_frame, textvariable=var, anchor=tk.W, wraplength=180, # Added wraplength for long paths
+                bg=tm.bg_color, fg=tm.fg_color
             )
             detail_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
-        # Preview frame (future enhancement)
-        preview_frame = tk.LabelFrame(
-            details_frame, text="Preview", 
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color
+        # Preview frame (Use ttk.LabelFrame)
+        preview_frame = ttk.LabelFrame(
+            details_frame, text="Preview"
+            # Style is inherited
         )
-        preview_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        preview_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=(10,5)) # Added top margin
         
         self.preview_label = tk.Label(
             preview_frame, text="No preview available",
-            bg="#2d2d2d", fg=self.theme_manager.fg_color,
-            wraplength=230, justify=tk.LEFT
-        )
+            bg=tm.input_bg_color, # Use ThemeManager input color
+            fg=tm.input_fg_color, # Use ThemeManager input color
+            wraplength=details_frame.cget('width') - 40, # Adjust wraplength dynamically
+            justify=tk.LEFT,
+            padx=5, pady=5)
         self.preview_label.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
     
     def _setup_action_buttons(self):
         """Set up action buttons for file operations"""
         btn_frame = tk.Frame(self.frame, bg=self.theme_manager.bg_color)
-        btn_frame.pack(fill=tk.X, padx=10, pady=5)
+        btn_frame.pack(fill=tk.X, padx=10, pady=(5,8)) # Adjusted pady
         
-        # Left side buttons
+        action_button_padx = (0, 5) # Default padx for most buttons
+
+        # Left side buttons (ttk.Button will inherit "TButton" style)
         ttk.Button(
             btn_frame, text="Upload File", 
             command=self._upload_files
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT, padx=action_button_padx)
         
         ttk.Button(
             btn_frame, text="New Folder", 
             command=self._create_new_folder
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT, padx=action_button_padx)
         
         ttk.Button(
             btn_frame, text="Edit Selected", 
             command=self._edit_selected_file
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT, padx=action_button_padx)
         
         # Right side buttons
         ttk.Button(
-            btn_frame, text="Download Selected", 
-            command=self._download_selected
-        ).pack(side=tk.RIGHT, padx=5)
-        
-        ttk.Button(
             btn_frame, text="Delete Selected", 
             command=self._delete_selected
-        ).pack(side=tk.RIGHT, padx=5)
-    
+        ).pack(side=tk.RIGHT, padx=(action_button_padx[1], action_button_padx[0])) # Reversed padx
+
+        ttk.Button(
+            btn_frame, text="Download Selected", 
+            command=self._download_selected
+        ).pack(side=tk.RIGHT, padx=action_button_padx)
+            
     def _create_context_menu(self):
         """Create context menu for file tree"""
-        self.context_menu = tk.Menu(self.file_tree, tearoff=0, 
-                                  bg="#2d2d2d", fg=self.theme_manager.fg_color)
+        tm = self.theme_manager
+        self.context_menu = tk.Menu(
+            self.file_tree, tearoff=0, 
+            bg=tm.input_bg_color, # Use ThemeManager color
+            fg=tm.input_fg_color,  # Use ThemeManager color
+            activebackground=tm.accent_color_1,
+            activeforeground=tm.button_fg_color,
+            relief=tk.FLAT,
+            bd=0
+        )
         
         self.context_menu.add_command(label="Download", command=self._download_selected)
         self.context_menu.add_command(label="Upload Here", command=self._upload_files)
@@ -254,17 +277,27 @@ class FileExplorerTab:
             return
         
         # Clear tree
-        for item in self.file_tree.get_children():
-            self.file_tree.delete(item)
+        # for item in self.file_tree.get_children(): # This is now handled by _apply_filter_and_refresh_tree
+        #     self.file_tree.delete(item) 
         
         # Clear details
         self._clear_details()
         
         # Start directory listing
-        self.sftp_ops.list_directory(
-            self.current_path, 
-            on_complete=self._on_directory_listed
-        )
+        # If we have unfiltered items and the filter entry is not empty,
+        # it means this is a manual refresh. We should re-apply the filter to existing items.
+        # Otherwise, list the directory from SFTP.
+        if self.unfiltered_items and hasattr(self, 'filter_var') and self.filter_var.get():
+             self._on_filter_changed() # Re-apply current filter to existing items
+        else:
+            # This is a fresh load or filter is empty.
+            # Clear the tree explicitly before fetching new items to avoid flashing old content.
+            for item_id in self.file_tree.get_children():
+                self.file_tree.delete(item_id)
+            self.sftp_ops.list_directory(
+                self.current_path, 
+                on_complete=self._on_directory_listed 
+            )
     
     def _on_directory_listed(self, success, items, error_message):
         """Handle directory listing completion"""
@@ -298,10 +331,104 @@ class FileExplorerTab:
             )
         
         # Configure tags
-        self.file_tree.tag_configure('directory', foreground='#77ccff')
-        self.file_tree.tag_configure('file', foreground=self.theme_manager.fg_color)
-        self.file_tree.tag_configure('link', foreground='#ffaa77')
-        self.file_tree.tag_configure('parent', foreground='#aaaaaa')
+        # Configure tags - using more theme-consistent colors
+        tm = self.theme_manager
+        self.file_tree.tag_configure('directory', foreground=getattr(tm, 'accent_color_2', '#77ccff')) # Brighter for dirs
+        self.file_tree.tag_configure('file', foreground=tm.fg_color)
+        self.file_tree.tag_configure('link', foreground=getattr(tm, 'warning_color', '#ffaa77')) # Assuming a warning/special color
+        self.file_tree.tag_configure('parent', foreground=getattr(tm, 'disabled_fg_color', '#aaaaaa'))
+
+    def _setup_filter_bar(self):
+        """Set up the filter bar for file and folder names."""
+        tm = self.theme_manager
+        filter_bar_frame = tk.Frame(self.frame, bg=tm.bg_color)
+        # Pack it above the path navigation, adjust pady as needed
+        filter_bar_frame.pack(fill=tk.X, padx=10, pady=(8, 0)) 
+
+        tk.Label(filter_bar_frame, text="Filter:", bg=tm.bg_color, fg=tm.fg_color).pack(side=tk.LEFT, padx=(0,5))
+        
+        self.filter_var = tk.StringVar() # Ensure filter_var is initialized here
+        self.filter_entry = ttk.Entry(
+            filter_bar_frame, 
+            textvariable=self.filter_var,
+            style="TEntry" 
+        )
+        self.filter_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,10))
+        self.filter_entry.bind("<KeyRelease>", self._on_filter_changed) # Bind event
+
+        self.clear_filter_button = ttk.Button(
+            filter_bar_frame,
+            text="Clear",
+            command=self._clear_filter, # Set command
+            style="TButton"
+        )
+        self.clear_filter_button.pack(side=tk.LEFT)
+
+    def _apply_filter_and_refresh_tree(self, items_to_display):
+        """Clears and repopulates the file_tree with the given items."""
+        for item_id in self.file_tree.get_children():
+            self.file_tree.delete(item_id)
+        
+        if not items_to_display: 
+            return
+
+        for item in items_to_display:
+            # Format size for display
+            if item['type'] == 'directory':
+                size_str = "<DIR>"
+            else:
+                size_str = self._format_size(item['size'])
+            
+            # Insert into tree
+            self.file_tree.insert(
+                "", "end",
+                values=(
+                    item['name'],
+                    size_str,
+                    item['type'],
+                    item['modified'],
+                    item['permissions']
+                ),
+                tags=(item['type'], "parent" if item.get('is_parent', False) else "")
+            )
+        # Note: Tag configuration is assumed to be done once elsewhere or will be handled
+        # if theme changes require it.
+
+    def _on_filter_changed(self, event=None):
+        """Handle filter text changes and update the tree view."""
+        filter_text = self.filter_var.get().lower()
+        
+        if not self.unfiltered_items: # No base items to filter
+            # This can happen if _on_directory_listed hasn't populated unfiltered_items yet
+            # or if navigation cleared it.
+            self._apply_filter_and_refresh_tree([]) # Ensure tree is empty if no data
+            return
+
+        if not filter_text: # Filter is empty, show all unfiltered items
+            self._apply_filter_and_refresh_tree(self.unfiltered_items)
+            return
+
+        filtered_items = []
+        parent_item = None # To store '..' if found
+        for item_data in self.unfiltered_items:
+            if item_data.get('is_parent', False):
+                parent_item = item_data 
+                continue # Don't filter '..' itself by name
+            if filter_text in item_data['name'].lower():
+                filtered_items.append(item_data)
+        
+        if parent_item: # Add '..' at the beginning if it was originally there and not filtered out
+            filtered_items.insert(0, parent_item)
+            
+        self._apply_filter_and_refresh_tree(filtered_items)
+
+    def _clear_filter(self):
+        """Clear the filter entry and refresh the tree to show all items."""
+        self.filter_var.set("") # Clear the filter variable which also clears entry
+        if self.unfiltered_items: # Only refresh if there are items to show
+            self._apply_filter_and_refresh_tree(self.unfiltered_items)
+        else: # If no unfiltered items, ensure tree is empty
+             self._apply_filter_and_refresh_tree([])
     
     def _on_item_double_click(self, event):
         """Handle double-click on tree item"""
@@ -434,11 +561,16 @@ class FileExplorerTab:
         
         # Normalize path separators for SFTP
         path = path.replace("\\", "/")
-        
+
+        # Clear filter when navigating to a new path
+        if hasattr(self, 'filter_var'): # Check if filter_var is initialized
+            self.filter_var.set("") 
+        self.unfiltered_items = [] # Clear previous directory's items
+
         # Update current path and refresh view
         self.current_path = path
         self.path_var.set(path)
-        self.refresh_view()
+        self.refresh_view() # This will call _on_directory_listed which applies empty filter initially
     
     def _on_path_changed(self, event=None):
         """Handle path entry change"""

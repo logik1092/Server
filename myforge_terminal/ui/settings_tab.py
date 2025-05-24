@@ -48,9 +48,13 @@ class SettingsTab:
     
     def _setup_ui(self):
         """Set up settings tab UI"""
-        settings_inner = tk.Frame(self.frame, bg=self.theme_manager.bg_color, padx=20, pady=20)
+        settings_inner = tk.Frame(self.frame, bg=self.theme_manager.bg_color, padx=10, pady=10) # Reduced padding
         settings_inner.pack(fill=tk.BOTH, expand=True)
         
+        # Common padding for grid items
+        self.grid_pady = (8, 8) 
+        self.grid_padx = (5, 5)
+
         # Connection settings
         self._setup_connection_settings(settings_inner)
         
@@ -65,119 +69,118 @@ class SettingsTab:
         
         # Buttons
         btn_frame = tk.Frame(settings_inner, bg=self.theme_manager.bg_color)
-        btn_frame.pack(pady=20)
-        
-        ttk.Button(btn_frame, text="Save Settings", 
-                  command=self._save_settings).pack(side=tk.LEFT, padx=10)
+        btn_frame.pack(pady=(20,10), fill=tk.X, anchor=tk.E) # Align to East (right)
         
         ttk.Button(btn_frame, text="Reset to Default", 
-                  command=self._reset_settings).pack(side=tk.LEFT, padx=10)
+                  command=self._reset_settings, style="TButton").pack(side=tk.RIGHT, padx=(0,10))
+        
+        ttk.Button(btn_frame, text="Save Settings", 
+                  command=self._save_settings, style="TButton").pack(side=tk.RIGHT, padx=(0,10))
     
     def _setup_connection_settings(self, parent):
         """Set up connection settings section"""
-        conn_frame = tk.LabelFrame(
+        tm = self.theme_manager
+        # Use ttk.LabelFrame
+        conn_frame = ttk.LabelFrame(
             parent, text="Connection Settings",
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            padx=10, pady=10
+            style="TLabelFrame" # Style from MainWindow
         )
-        conn_frame.pack(fill=tk.X, pady=10)
-        
+        conn_frame.pack(fill=tk.X, pady=(5,10))
+        conn_frame.columnconfigure(1, weight=1) # Make entry column expandable
+
         # Username field
         tk.Label(conn_frame, text="Username:", 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).grid(row=0, column=0, sticky=tk.W, pady=5)
+                bg=tm.bg_color, fg=tm.fg_color).grid(
+            row=0, column=0, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        tk.Entry(conn_frame, textvariable=self.username_var, 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color).grid(
-            row=0, column=1, sticky=tk.W+tk.E, pady=5)
+        ttk.Entry(conn_frame, textvariable=self.username_var, style="TEntry").grid(
+            row=0, column=1, sticky=tk.EW, pady=self.grid_pady, padx=self.grid_padx)
         
         # Hostname field
         tk.Label(conn_frame, text="Hostname:", 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).grid(row=1, column=0, sticky=tk.W, pady=5)
+                bg=tm.bg_color, fg=tm.fg_color).grid(
+            row=1, column=0, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        tk.Entry(conn_frame, textvariable=self.hostname_var, 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color).grid(
-            row=1, column=1, sticky=tk.W+tk.E, pady=5)
+        ttk.Entry(conn_frame, textvariable=self.hostname_var, style="TEntry").grid(
+            row=1, column=1, sticky=tk.EW, pady=self.grid_pady, padx=self.grid_padx)
         
         # Port field
         tk.Label(conn_frame, text="Port:", 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).grid(row=2, column=0, sticky=tk.W, pady=5)
+                bg=tm.bg_color, fg=tm.fg_color).grid(
+            row=2, column=0, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        tk.Entry(conn_frame, textvariable=self.port_var, 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color).grid(
-            row=2, column=1, sticky=tk.W+tk.E, pady=5)
+        ttk.Entry(conn_frame, textvariable=self.port_var, style="TEntry").grid(
+            row=2, column=1, sticky=tk.EW, pady=self.grid_pady, padx=self.grid_padx)
         
         # Password field
         tk.Label(conn_frame, text="Password:", 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).grid(row=3, column=0, sticky=tk.W, pady=5)
+                bg=tm.bg_color, fg=tm.fg_color).grid(
+            row=3, column=0, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        tk.Entry(conn_frame, textvariable=self.password_var, show="*", 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color).grid(
-            row=3, column=1, sticky=tk.W+tk.E, pady=5)
+        ttk.Entry(conn_frame, textvariable=self.password_var, show="*", style="TEntry").grid(
+            row=3, column=1, sticky=tk.EW, pady=self.grid_pady, padx=self.grid_padx)
         
-        # Remember password checkbox
-        tk.Checkbutton(
-            conn_frame, text="Remember password",
+        # Checkbuttons frame for better alignment
+        check_frame = tk.Frame(conn_frame, bg=tm.bg_color)
+        check_frame.grid(row=4, column=1, columnspan=1, sticky=tk.W, pady=(0, self.grid_pady[1]))
+
+        # Remember password checkbox (use ttk.Checkbutton)
+        ttk.Checkbutton(
+            check_frame, text="Remember password",
             variable=self.remember_var,
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            selectcolor="#2d2d2d",
-            activebackground=self.theme_manager.bg_color,
-            activeforeground=self.theme_manager.fg_color
-        ).grid(row=4, column=1, sticky=tk.W, pady=5)
+            style="TCheckbutton" # Style from MainWindow
+        ).pack(side=tk.LEFT, anchor=tk.W, padx=(0,15))
         
-        # Auto connect checkbox
-        tk.Checkbutton(
-            conn_frame, text="Auto-connect on startup",
+        # Auto connect checkbox (use ttk.Checkbutton)
+        ttk.Checkbutton(
+            check_frame, text="Auto-connect on startup",
             variable=self.auto_connect_var,
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            selectcolor="#2d2d2d",
-            activebackground=self.theme_manager.bg_color,
-            activeforeground=self.theme_manager.fg_color
-        ).grid(row=5, column=1, sticky=tk.W, pady=5)
+            style="TCheckbutton" # Style from MainWindow
+        ).pack(side=tk.LEFT, anchor=tk.W)
         
         # SSH Key field
         tk.Label(conn_frame, text="SSH Key:", 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).grid(row=6, column=0, sticky=tk.W, pady=5)
+                bg=tm.bg_color, fg=tm.fg_color).grid(
+            row=5, column=0, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        key_frame = tk.Frame(conn_frame, bg=self.theme_manager.bg_color)
-        key_frame.grid(row=6, column=1, sticky=tk.W+tk.E, pady=5)
+        key_frame = tk.Frame(conn_frame, bg=tm.bg_color)
+        key_frame.grid(row=5, column=1, sticky=tk.EW, pady=self.grid_pady, padx=self.grid_padx)
         
-        tk.Entry(key_frame, textvariable=self.key_path_var, 
-                bg="#2d2d2d", fg=self.theme_manager.fg_color).pack(
-            side=tk.LEFT, fill=tk.X, expand=True)
+        ttk.Entry(key_frame, textvariable=self.key_path_var, style="TEntry").pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(0,5))
         
-        ttk.Button(key_frame, text="Browse", 
-                  command=self._browse_key).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(key_frame, text="Browse", command=self._browse_key, style="TButton").pack(side=tk.RIGHT)
     
     def _setup_server_profiles(self, parent):
         """Set up server profiles section"""
-        profiles_frame = tk.LabelFrame(
+        tm = self.theme_manager
+        profiles_frame = ttk.LabelFrame(
             parent, text="Server Profiles",
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            padx=10, pady=10
+            style="TLabelFrame"
         )
         profiles_frame.pack(fill=tk.X, pady=10)
         
         # Profiles List
-        profiles_list_frame = tk.Frame(profiles_frame, bg=self.theme_manager.bg_color)
-        profiles_list_frame.pack(fill=tk.X, pady=5)
+        profiles_list_frame = tk.Frame(profiles_frame, bg=tm.bg_color)
+        profiles_list_frame.pack(fill=tk.X, pady=(5,0), padx=5) # Added padx
         
         self.profiles_listbox = tk.Listbox(
-            profiles_list_frame, height=5,
-            bg="#2d2d2d", fg=self.theme_manager.fg_color,
-            selectbackground=self.theme_manager.accent_color,
-            selectforeground="#ffffff"
+            profiles_list_frame, height=4, # Reduced height
+            bg=tm.input_bg_color, 
+            fg=tm.input_fg_color,
+            selectbackground=tm.accent_color_1,
+            selectforeground=tm.button_fg_color, # Consistent with other selections
+            borderwidth=1, # Thin border
+            relief=tk.FLAT,
+            highlightthickness=0, # No focus highlight
+            exportselection=False
         )
-        self.profiles_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.profiles_listbox.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=2) # Added ipady
         
         # Scrollbar
-        profiles_scrollbar = ttk.Scrollbar(
+        profiles_scrollbar = ttk.Scrollbar( # Use ttk.Scrollbar
             profiles_list_frame, orient=tk.VERTICAL,
-            command=self.profiles_listbox.yview
+            command=self.profiles_listbox.yview, style="TScrollbar"
         )
         profiles_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.profiles_listbox.config(yscrollcommand=profiles_scrollbar.set)
@@ -189,90 +192,83 @@ class SettingsTab:
         self.profiles_listbox.bind('<<ListboxSelect>>', self._on_profile_selected)
         
         # Buttons
-        profiles_btn_frame = tk.Frame(profiles_frame, bg=self.theme_manager.bg_color)
-        profiles_btn_frame.pack(fill=tk.X, pady=5)
+        profiles_btn_frame = tk.Frame(profiles_frame, bg=tm.bg_color)
+        profiles_btn_frame.pack(fill=tk.X, pady=(5,8), padx=5) # Adjusted padding
         
+        button_padx = (0,10)
         ttk.Button(profiles_btn_frame, text="Add Current", 
-                  command=self._add_profile).pack(side=tk.LEFT, padx=5)
+                  command=self._add_profile, style="TButton").pack(side=tk.LEFT, padx=button_padx)
         
         ttk.Button(profiles_btn_frame, text="Update Selected", 
-                  command=self._update_profile).pack(side=tk.LEFT, padx=5)
+                  command=self._update_profile, style="TButton").pack(side=tk.LEFT, padx=button_padx)
         
         ttk.Button(profiles_btn_frame, text="Remove Selected", 
-                  command=self._remove_profile).pack(side=tk.LEFT, padx=5)
+                  command=self._remove_profile, style="TButton").pack(side=tk.LEFT, padx=(button_padx[0], 0))
     
     def _setup_ui_settings(self, parent):
         """Set up UI settings section"""
-        ui_frame = tk.LabelFrame(
+        tm = self.theme_manager
+        ui_frame = ttk.LabelFrame(
             parent, text="Interface Settings",
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            padx=10, pady=10
+            style="TLabelFrame"
         )
         ui_frame.pack(fill=tk.X, pady=10)
+        ui_frame.columnconfigure(1, weight=1) # Make control column expandable
         
         # Font size
         tk.Label(ui_frame, text="Font Size:", 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).grid(row=0, column=0, sticky=tk.W, pady=5)
+                bg=tm.bg_color, fg=tm.fg_color).grid(
+            row=0, column=0, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        font_frame = tk.Frame(ui_frame, bg=self.theme_manager.bg_color)
-        font_frame.grid(row=0, column=1, sticky=tk.W, pady=5)
+        font_frame = tk.Frame(ui_frame, bg=tm.bg_color)
+        font_frame.grid(row=0, column=1, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        ttk.Button(font_frame, text="-", width=3, 
+        ttk.Button(font_frame, text="-", width=3, style="TButton",
                   command=lambda: self._change_font_size(-1)).pack(side=tk.LEFT)
         
-        tk.Label(font_frame, textvariable=self.font_size_var, width=3, 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).pack(side=tk.LEFT, padx=5)
+        tk.Label(font_frame, textvariable=self.font_size_var, width=4, anchor=tk.CENTER,
+                bg=tm.input_bg_color, fg=tm.input_fg_color).pack(side=tk.LEFT, padx=5)
         
-        ttk.Button(font_frame, text="+", width=3, 
+        ttk.Button(font_frame, text="+", width=3, style="TButton",
                   command=lambda: self._change_font_size(1)).pack(side=tk.LEFT)
         
         # Theme selection
         tk.Label(ui_frame, text="Theme:", 
-                bg=self.theme_manager.bg_color, 
-                fg=self.theme_manager.fg_color).grid(row=1, column=0, sticky=tk.W, pady=5)
+                bg=tm.bg_color, fg=tm.fg_color).grid(
+            row=1, column=0, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        theme_frame = tk.Frame(ui_frame, bg=self.theme_manager.bg_color)
-        theme_frame.grid(row=1, column=1, sticky=tk.W, pady=5)
+        theme_frame = tk.Frame(ui_frame, bg=tm.bg_color)
+        theme_frame.grid(row=1, column=1, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
         
-        tk.Radiobutton(
+        # Use ttk.Radiobutton
+        ttk.Radiobutton(
             theme_frame, text="Dark", variable=self.theme_var, value="dark",
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            selectcolor="#2d2d2d",
-            activebackground=self.theme_manager.bg_color,
-            activeforeground=self.theme_manager.fg_color
-        ).pack(side=tk.LEFT)
+            style="TRadiobutton" # Style from MainWindow
+        ).pack(side=tk.LEFT, padx=(0,5))
         
-        tk.Radiobutton(
+        ttk.Radiobutton(
             theme_frame, text="Light", variable=self.theme_var, value="light",
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            selectcolor="#2d2d2d",
-            activebackground=self.theme_manager.bg_color,
-            activeforeground=self.theme_manager.fg_color
-        ).pack(side=tk.LEFT, padx=10)
+            style="TRadiobutton" # Style from MainWindow
+        ).pack(side=tk.LEFT, padx=(0,5))
         
-        # Log commands checkbox
-        tk.Checkbutton(
+        # Log commands checkbox (use ttk.Checkbutton)
+        ttk.Checkbutton(
             ui_frame, text="Log commands and responses",
             variable=self.log_commands_var,
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            selectcolor="#2d2d2d",
-            activebackground=self.theme_manager.bg_color,
-            activeforeground=self.theme_manager.fg_color
-        ).grid(row=2, column=1, sticky=tk.W, pady=5)
+            style="TCheckbutton" # Style from MainWindow
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=self.grid_pady, padx=self.grid_padx)
     
     def _setup_commands_settings(self, parent):
         """Set up commands settings section"""
-        commands_frame = tk.LabelFrame(
-            parent, text="Commands",
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            padx=10, pady=10
+        tm = self.theme_manager
+        commands_frame = ttk.LabelFrame(
+            parent, text="Custom Commands", # Renamed for clarity
+            style="TLabelFrame"
         )
         commands_frame.pack(fill=tk.X, pady=10)
         
-        ttk.Button(commands_frame, text="Edit Custom Commands", 
-                  command=self._edit_commands).pack(pady=5)
+        ttk.Button(commands_frame, text="Edit Custom Commands", style="TButton",
+                  command=self._edit_commands).pack(pady=10, padx=10, anchor=tk.W) # Added padding and anchor
     
     def _populate_profiles(self):
         """Populate server profiles listbox"""

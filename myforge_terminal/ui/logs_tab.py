@@ -51,24 +51,48 @@ class LogsTab:
         self.filter_var = tk.StringVar()
         filter_entry = tk.Entry(
             filter_frame, textvariable=self.filter_var,
-            bg="#2d2d2d", fg=self.theme_manager.fg_color
-        )
-        filter_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-        filter_entry.bind("<KeyRelease>", self._apply_filter)
-        
-        ttk.Button(
-            filter_frame, text="Clear Filter", 
-            command=self._clear_filter
-        ).pack(side=tk.LEFT, padx=5)
-        
-        # Logs output
-        self.logs_output = scrolledtext.ScrolledText(
-            logs_inner, wrap=tk.WORD,
-            font=("Consolas", 10),
-            bg="#2d2d2d", fg=self.theme_manager.fg_color,
+            bg=self.theme_manager.input_bg_color, 
+            fg=self.theme_manager.input_fg_color,
+            relief=tk.FLAT,
+            bd=2, # Consistent with FileExplorerTab path_entry
             insertbackground=self.theme_manager.fg_color
         )
-        self.logs_output.pack(fill=tk.BOTH, expand=True)
+        filter_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,10), ipady=2) # Adjusted padding
+        filter_entry.bind("<KeyRelease>", self._apply_filter)
+        
+        ttk.Button( # Will inherit TButton style
+            filter_frame, text="Clear Filter", 
+            command=self._clear_filter
+        ).pack(side=tk.LEFT, padx=(0,0))
+        
+        # Logs output
+        # scrolledtext.ScrolledText is a tk.Frame containing a tk.Text and tk.Scrollbar
+        # We style the underlying tk.Text widget directly.
+        self.logs_output = scrolledtext.ScrolledText(
+            logs_inner, wrap=tk.WORD
+            # The actual Text widget is a child, styled below
+        )
+        # Configure the Text widget part of ScrolledText
+        self.logs_output.configure(
+            font=('Consolas', self.theme_manager.config.get("font_size", 10) if hasattr(self.theme_manager, 'config') else 10), # Use configured font size
+            bg=self.theme_manager.input_bg_color, 
+            fg=self.theme_manager.fg_color,
+            insertbackground=self.theme_manager.fg_color,
+            relief=tk.FLAT,
+            borderwidth=0, # No border for the text area itself
+            padx=5, # Internal padding for text
+            pady=5
+        )
+        # Attempt to style the frame of ScrolledText if needed (usually not necessary)
+        # self.logs_output.frame.config(background=self.theme_manager.bg_color)
+
+        # For the scrollbar part of ScrolledText, it's a tk.Scrollbar, not ttk.
+        # Direct styling is limited. If a ttk.Scrollbar look is essential,
+        # ScrolledText would need to be reimplemented or an alternative used.
+        # Basic trough color can sometimes be influenced by tk option_add if global tk scrollbar styling is desired.
+        # self.logs_output.vbar.config( troughcolor=self.theme_manager.input_bg_color ) # Example, might not work on all themes/OS
+
+        self.logs_output.pack(fill=tk.BOTH, expand=True, pady=(0,5)) # Added bottom padding
         
         # Set read-only
         self.logs_output.config(state=tk.DISABLED)
@@ -81,28 +105,26 @@ class LogsTab:
         
         # Action buttons
         btn_frame = tk.Frame(logs_inner, bg=self.theme_manager.bg_color)
-        btn_frame.pack(fill=tk.X, pady=10)
+        btn_frame.pack(fill=tk.X, pady=(5,0)) # Adjusted pady
         
-        ttk.Button(
+        button_padx = (0,10)
+        ttk.Button( # Will inherit TButton style
             btn_frame, text="Clear Logs", 
             command=self._clear_logs
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT, padx=button_padx)
         
-        ttk.Button(
+        ttk.Button( # Will inherit TButton style
             btn_frame, text="Export Logs", 
             command=self._export_logs
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.LEFT, padx=(0,0)) # No right padding for last left-aligned button
         
-        # Auto-scroll checkbox
+        # Auto-scroll checkbox (use ttk.Checkbutton)
         self.auto_scroll_var = tk.BooleanVar(value=True)
-        tk.Checkbutton(
+        ttk.Checkbutton( # Use ttk.Checkbutton
             btn_frame, text="Auto-scroll",
             variable=self.auto_scroll_var,
-            bg=self.theme_manager.bg_color, fg=self.theme_manager.fg_color,
-            selectcolor="#2d2d2d",
-            activebackground=self.theme_manager.bg_color,
-            activeforeground=self.theme_manager.fg_color
-        ).pack(side=tk.RIGHT, padx=5)
+            style="TCheckbutton" # Style from MainWindow
+        ).pack(side=tk.RIGHT, padx=(0,0)) # No external padding for right-most item
     
     def _load_logs(self):
         """Load logs from logger"""
